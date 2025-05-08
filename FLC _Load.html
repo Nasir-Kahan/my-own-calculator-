@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Full Load Current & Cable Size Calculator</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border: 1px solid #ddd;
+            width: 450px;
+        }
+        h1 {
+            text-align: center;
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="number"], select {
+            width: calc(100% - 12px);
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .result-box {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .result-item {
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .highlight {
+            color: #28a745;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .formula {
+            font-style: italic;
+            color: #777;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Full Load Current & Cable Size Calculator</h1>
+
+        <div class="input-group">
+            <label for="powerValue">Enter Power Value:</label>
+            <input type="number" id="powerValue" placeholder="Enter kW or kVA">
+        </div>
+
+        <div class="input-group">
+            <label for="powerUnit">Select Power Unit:</label>
+            <select id="powerUnit">
+                <option value="kW">kW</option>
+                <option value="kVA">kVA</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="voltage">Enter Line-to-Line Voltage (V):</label>
+            <input type="number" id="voltage" placeholder="e.g., 400">
+        </div>
+
+        <div class="input-group">
+            <label for="powerFactor">Enter Power Factor (e.g., 0.8):</label>
+            <input type="number" id="powerFactor" placeholder="e.g., 0.8" step="0.01" min="0" max="1">
+        </div>
+
+        <button onclick="calculateFLCandCableSize()">Calculate FLC & Cable Size</button>
+
+        <div class="result-box" id="result" style="display: none;">
+            <h2>Calculation Results</h2>
+            <div class="result-item">Full Load Current (FLC): <span id="flcValue"></span> Amps</div>
+            <div class="result-item">Recommended Copper Cable Size: <span id="copperSize"></span> mm²</div>
+            <div class="result-item">Recommended Aluminum Cable Size: <span id="aluminumSize"></span> mm²</div>
+            <div class="formula">Formulas used are approximate thumb rules.</div>
+        </div>
+    </div>
+
+    <script>
+        function calculateFLCandCableSize() {
+            const powerValue = parseFloat(document.getElementById("powerValue").value);
+            const powerUnit = document.getElementById("powerUnit").value;
+            const voltage = parseFloat(document.getElementById("voltage").value);
+            const powerFactor = parseFloat(document.getElementById("powerFactor").value);
+            const resultDiv = document.getElementById("result");
+            const flcSpan = document.getElementById("flcValue");
+            const copperSizeSpan = document.getElementById("copperSize");
+            const aluminumSizeSpan = document.getElementById("aluminumSize");
+
+            if (isNaN(powerValue) || isNaN(voltage) || isNaN(powerFactor)) {
+                flcSpan.textContent = "Please enter valid numbers for all fields.";
+                copperSizeSpan.textContent = "";
+                aluminumSizeSpan.textContent = "";
+                resultDiv.style.display = "block";
+                return;
+            }
+
+            if (voltage <= 0 || powerFactor <= 0 || powerFactor > 1) {
+                flcSpan.textContent = "Please enter valid values for voltage and power factor.";
+                copperSizeSpan.textContent = "";
+                aluminumSizeSpan.textContent = "";
+                resultDiv.style.display = "block";
+                return;
+            }
+
+            let fullLoadCurrent;
+
+            if (powerUnit === "kW") {
+                fullLoadCurrent = (powerValue * 1000) / (Math.sqrt(3) * voltage * powerFactor);
+            } else if (powerUnit === "kVA") {
+                fullLoadCurrent = (powerValue * 1000) / (Math.sqrt(3) * voltage);
+            } else {
+                flcSpan.textContent = "Please select a valid power unit.";
+                copperSizeSpan.textContent = "";
+                aluminumSizeSpan.textContent = "";
+                resultDiv.style.display = "block";
+                return;
+            }
+
+            const safeCurrent = fullLoadCurrent * 1.25; // Applying a safety factor
+
+            const copperCableSize = Math.round(safeCurrent / 5);
+            const aluminumCableSize = Math.round(safeCurrent / 3);
+
+            flcSpan.textContent = fullLoadCurrent.toFixed(2);
+            copperSizeSpan.textContent = copperCableSize > 0 ? `${copperCableSize} mm²` : "N/A";
+            aluminumSizeSpan.textContent = aluminumCableSize > 0 ? `${aluminumCableSize} mm²` : "N/A";
+            resultDiv.style.display = "block";
+        }
+    </script>
+</body>
+</html>
